@@ -44,12 +44,13 @@ Sign a transaction
 
 #### Basics / Transactions 
 
-Two functions PushContract and SendEthereum to initiate transactions
+PostContract - send a contract onto the blockchain
 
 ```
 	hash, err := ethTxn.PostContract(banker,common.FromHex(compiledContract.Code))
 ```
 
+SendEthereum - transfer ether
 ```
 	to := common.HexToAddress("0x39c5ab6cf1fd6036505133737d4dd655fefd9d8d")
 	txHash,err := ethTxn.SendEthereum(banker,to,1000000000000000000)
