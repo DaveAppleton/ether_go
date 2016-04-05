@@ -1,15 +1,5 @@
-// New project target
-// HelloGold creates the contract
-// banker is set as the banker
-// account1 and account2 get accounts in the contract
-// 
-// Web interface allows
-//   MYR to be added to account1 & account2
-//   Gold to be added to banker
-//   account1 & account2 to buy gold
-//   account1 & account2 to sell gold
-//   balances of all accounts to be seen
-//
+
+// Project playground
 //
 package main
 

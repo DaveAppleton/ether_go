@@ -67,14 +67,17 @@ func (ac * AccountKey) GetKey() ( *	ecdsa.PrivateKey ) {
 	return ac.Key
 }
 
+// Get Public Key as an address
 func (ac * AccountKey) PublicKey() common.Address  {
 	return crypto.PubkeyToAddress(ac.Key.PublicKey)
 }
 
+// Get Public Key as a string - e.g. "0xabcd....."
 func (ac * AccountKey) PublicKeyAsHexString() string  {
 	return crypto.PubkeyToAddress(ac.Key.PublicKey).Hex()
 }
 
+// Sign a transaction with the key
 func (ac * AccountKey) Sign(t * types.Transaction) (tr *types.Transaction,err error) {
 	tr, err = t.SignECDSA(ac.Key)
 	return

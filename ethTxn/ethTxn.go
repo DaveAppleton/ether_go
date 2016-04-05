@@ -79,7 +79,8 @@ type tx struct {
 	Data			string
 }
 
-
+// Estimate the gas required for a contract to run
+//
 func estimateGas(sender  * ethKeys.AccountKey, contract string) (big.Int,error) {
 	var txStruct	tx
 	
@@ -123,7 +124,7 @@ func estimateGas(sender  * ethKeys.AccountKey, contract string) (big.Int,error) 
 
 
 // PostContract(sender * ethKeys.AccountKey, contract string) (interface{},error) 
-// contract comes from :  common.FromHex(compiledContract.Code
+// contract comes from :  common.FromHex(compiledContract.Code)
 // return value is the TxHash
 //
 func PostContract(sender * ethKeys.AccountKey, contract []byte) (interface{},error) {
@@ -196,6 +197,9 @@ func PostContract(sender * ethKeys.AccountKey, contract []byte) (interface{},err
 
 }
 
+// You probably have a far better way to handle this but this 
+// creates a wait loop for the transaction to enter the blockchain
+//
 func WaitForTxnReceipt(txn interface{}) (interface{},error) {
 	var ret 	interface{}
 	var zero  interface{}

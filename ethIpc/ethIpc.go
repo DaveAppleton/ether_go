@@ -36,6 +36,9 @@ func NewEthIpc() *ethIpcHandler  {
 }
 
 // Call is a direct pass through to JSON / Client
+//
+// REMEMBER : args is a STRUCTURE not JSON - forget this at your peril
+//
 func  (eh *ethIpcHandler) Call(serviceMethod string, args interface{}, reply interface{}) error {
 	laddr := net.UnixAddr{Net: "unix", Name: eh.ipcFileLocation}
 	conn, err := net.DialUnix("unix", nil, &laddr)
