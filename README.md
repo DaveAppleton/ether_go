@@ -19,6 +19,51 @@ NOTE: to run some of the examples You will need to have some ether in the banker
 
 The tests are a bit dodgy but the functionality is there....
 
+#### Basics / Keys
+
+Create an account if it does not exist - or load it
+
+```
+	banker := ethKeys.NewKey("banker")
+	err = banker.RestoreOrCreate()
+	if err != nil {
+		fmt.Printf("Creating Banker %v\n",err)
+		os.Exit(1)
+	}
+```
+
+Get the address as a string (eg to set as a mining target or receive ether, to put in JSON)
+```
+	fmt.Println(banker. PublicKeyAsHexString())
+```
+
+Sign a transaction
+```
+	signedTxn,err := banker.Sign(unsignedTransaction)
+```
+
+#### Basics / Transactions 
+
+Two functions PushContract and SendEthereum to initiate transactions
+
+```
+	hash, err := ethTxn.PostContract(banker,common.FromHex(compiledContract.Code))
+```
+
+```
+	to := common.HexToAddress("0x39c5ab6cf1fd6036505133737d4dd655fefd9d8d")
+	txHash,err := ethTxn.SendEthereum(banker,to,1000000000000000000)
+```
+
+and a sample function to wait for the transaction to enter the blockchain
+
+```
+	txResult,err := ethTxn.WaitForTxnReceipt(txHash)
+```
+
+
+
+
 ### mixed ether-go and JSON examples:
 
 
