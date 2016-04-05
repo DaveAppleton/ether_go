@@ -76,36 +76,7 @@ func main() {
 	hash, err := ethTxn.PostContract(banker,common.FromHex(compiledContract.Code))
 	fmt.Println("Posted - got ",hash)
 	
-//	nonce := uint64( 1048600)
-//	var amount	 big.Int
-//	amount.SetInt64(00)
-//	var gasLimit big.Int
-//	gasLimit.SetInt64(90000000)
-//	var gasPrice big.Int
-//	gasPrice.SetInt64(20000000000)
-//
-//	newContractTx := types.NewContractCreation(nonce,&amount, &gasLimit, &gasPrice, common.FromHex(compiledContract.Code))
-//	nt,err := banker.Sign(newContractTx)
-//	
-//	rlpEncodedTx, err := rlp.EncodeToBytes(nt)
-//	if err != nil {
-//	    panic(err)
-//	}
-//	
-//	strTxn := "0x"+common.Bytes2Hex(rlpEncodedTx)
-//	
-//	fmt.Printf("this goes in to raw tx: %v\n",strTxn )
-//
-//
-//
-//	handler := ethIpc.NewEthIpc()
-//	var ret interface{} // map[ string] string
-//	fmt.Println("calling sendRaw")
-//	err = handler.Call("eth_sendRawTransaction",&strTxn, &ret)
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	fmt.Println(ret)
+// To do - figure out how to call the contract!
 
 
 }
