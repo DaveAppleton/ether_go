@@ -1,5 +1,11 @@
 # ether-go
 
+This library ws created because
+
+1. you may not like signing via RPC or IPC calls
+2. you may not want to use the key store which keeps wanting passwords etc. and only workds if a key is unlocked.
+
+
 You will need to load the following...
 
 ```
