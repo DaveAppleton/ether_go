@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"	
 	"math/big"
-	"encoding/json"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -96,20 +95,10 @@ func estimateGas(sender  * ethKeys.AccountKey, contract string) (big.Int,error) 
 		return zero,errors.New("error in IPC")
 	}
 
-	txStruct.From = sender.PublicKeyAsHexString()
-	txStruct.To = ""
 	txStruct.Data    = contract
-	bytesTxn,err := json.Marshal(&txStruct)
-	if err != nil {
-		return zero,err
-	}
-	strTxn := string(bytesTxn)
-	fmt.Println("json ",strTxn)
-	
-
 	
 	var gasLimitStr string
-	err = myEipc.Call("eth_estimateGas",&txStruct,&gasLimitStr)
+	err := myEipc.Call("eth_estimateGas",&txStruct,&gasLimitStr)
 	if err != nil {
 		return zero,err
 	}
@@ -167,16 +156,14 @@ func PostContract(sender * ethKeys.AccountKey, contract []byte) (interface{},err
 	
 	strTxn := "0x"+common.Bytes2Hex(rlpEncodedTx)
 
-	gasLimit,err = estimateGas(sender,strTxn)
+	gasLimit,err = estimateGas(sender,common.ToHex(contract))
 	if err != nil {
 		return zero,nil
 	}
 	
-	fmt.Println("Gas Limit",gasLimit)
-	var dummyGas	big.Int
-	dummyGas.SetInt64(90000)
+	fmt.Println("Gas Limit",gasLimit.Int64())
 	
-	newContractTx = types.NewContractCreation(nonce,&amount,&dummyGas , gasPrice, contract)
+	newContractTx = types.NewContractCreation(nonce,&amount,&gasLimit , gasPrice, contract)
 	nt,err = sender.Sign(newContractTx)
 	
 	rlpEncodedTx, err = rlp.EncodeToBytes(nt)
