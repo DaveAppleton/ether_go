@@ -77,3 +77,13 @@ and a sample function to wait for the transaction to enter the blockchain
 2. firstContractPlayground.go	a load of calls here - have a look
 
 
+ getKeyAddress.go will create a key (banker) and print out its address
+ so that you can send it funds so that it can work in the next example
+ 
+
+ firstContractPlayground.go contains code to 
+ 1. Compile a contract
+ 2. Post that contract to the blockchain (from the banker acount)
+ 
+ This does, of course, require that the banker account has sufficient funds
+
