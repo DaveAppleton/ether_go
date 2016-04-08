@@ -203,8 +203,7 @@ func WaitForTxnReceipt(txn interface{}) (interface{},error) {
 		if err == nil {
 			break
 		}
-		fmt.Println("Err:",err)
-		fmt.Println(".",ret)
+		fmt.Print(".")
 		time.Sleep(500*time.Millisecond)
 
 		if count < 0 {

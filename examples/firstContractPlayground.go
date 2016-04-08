@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"flag"
 
 	// ether-go stuff
 	"ether_go/ethKeys"
@@ -56,7 +57,11 @@ func compileContract(source string) (*compiler.Contract,error) {
 }
 
 func main() {
-	contract, err := loadContractFromFile("contracts/contract.sol")
+	fileToCompile := flag.String("contract","contracts/contract.sol","File to compile")
+	loadTxHash    := flag.String("txhash","0x","Load TxHash instead of posting")
+	
+	flag.Parse();
+	contract, err := loadContractFromFile(*fileToCompile) //"contracts/contract.sol")
 	if err != nil {
 		log.Fatal(err);
 	}
@@ -72,11 +77,37 @@ func main() {
 		fmt.Printf("Creating Banker %v\n",err)
 		os.Exit(1)
 	}
+	var txr interface{}
+	var hash interface{}
+	if *loadTxHash == "0x" {
+		hash, err = ethTxn.PostContract(banker,common.FromHex(compiledContract.Code))
+		if err != nil {
+			fmt.Printf("PostContract %v\n",err)
+			os.Exit(1)
+		}	
+		fmt.Printf("Posted. If the wait for receipt times out you can repeat this command with -txhash=%v\n",hash)
+		txr,err = ethTxn. WaitForTxnReceipt(hash)
+	} else {
+		txr,err = ethTxn. WaitForTxnReceipt(loadTxHash)
+		
+	}
+	if err != nil {
+		fmt.Printf("Wait for receipt: %v\n",err)
+		os.Exit(1)
+	}
 	
-	hash, err := ethTxn.PostContract(banker,common.FromHex(compiledContract.Code))
-	fmt.Println("Posted - got ",hash)
+	fmt.Println("Transaction Receipt : ",txr)
 	
-// To do - figure out how to call the contract!
+	ca_m,ok := txr.(map[string]interface{});
+	if !ok {
+		fmt.Println("cannot get map")
+		os.Exit(1)
+	}
+	fmt.Println("Contract Address : ",ca_m["contractAddress"])
+	
+	
+// Get the contract's Address :
+	//fmt.Println("Contract Address : ",txr["contractAddress"])
 
 
 }

@@ -43,7 +43,6 @@ func  (eh *ethIpcHandler) Call(serviceMethod string, args interface{}, reply int
 	laddr := net.UnixAddr{Net: "unix", Name: eh.ipcFileLocation}
 	conn, err := net.DialUnix("unix", nil, &laddr)
 	if err != nil {
-		log.Println("Failed to connect:", err)
 		return err
 	}
 	defer conn.Close()
@@ -52,7 +51,6 @@ func  (eh *ethIpcHandler) Call(serviceMethod string, args interface{}, reply int
 	
 	err = client.Call(serviceMethod,args,&reply)
 	if err != nil {
-		log.Println("Call ",err)	
 		return err
 	}
 	return nil
