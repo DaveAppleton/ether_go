@@ -3,54 +3,53 @@ package ethKeys
 import (
 	"crypto/ecdsa"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 type AccountKey struct {
-		Name		string
-		Key		*  ecdsa.PrivateKey
+	Name string
+	Key  *ecdsa.PrivateKey
 }
 
 // NewKey creates a new named key
 // simple use of named keys is to save to files
 // more work required
-func NewKey(name string) * AccountKey {
+func NewKey(name string) *AccountKey {
 	ak := new(AccountKey)
 	ak.Name = name
 	return ak
 }
 
 // SaveKey - save key as file in current working directory
-func (ac * AccountKey)SaveKey() (error) {
-	err := crypto.SaveECDSA(ac.Name,ac.Key)
+func (ac *AccountKey) SaveKey() error {
+	err := crypto.SaveECDSA(ac.Name, ac.Key)
 	return err
 }
 
 // LoadKey - Load key (if it exists) from current directory
-func  (ac * AccountKey)LoadKey() (error) {
-	key,err := crypto.LoadECDSA(ac.Name)
+func (ac *AccountKey) LoadKey() error {
+	key, err := crypto.LoadECDSA(ac.Name)
 	if err == nil {
 		ac.Key = key
 	}
-  return err
+	return err
 }
 
 // GenerateKey - generate a new key pair
 // WARNING : will overwrite existing key pair
-func  (ac * AccountKey)GenerateKey() (error) {
-	key, err := crypto.GenerateKey();
+func (ac *AccountKey) GenerateKey() error {
+	key, err := crypto.GenerateKey()
 	if err != nil {
 		return err
-	}	
+	}
 	ac.Key = key
 	return nil
 }
 
 // RestoreOrCreate - if exists, load key
 //                 - otherwise generate new key
-func (ac * AccountKey) RestoreOrCreate() (error) {
+func (ac *AccountKey) RestoreOrCreate() error {
 	err := ac.LoadKey()
 	if err == nil {
 		return nil
@@ -63,23 +62,23 @@ func (ac * AccountKey) RestoreOrCreate() (error) {
 }
 
 // GetKey - get key, e.g. for signing
-func (ac * AccountKey) GetKey() ( *	ecdsa.PrivateKey ) {
+func (ac *AccountKey) GetKey() *ecdsa.PrivateKey {
 	return ac.Key
 }
 
-// Get Public Key as an address
-func (ac * AccountKey) PublicKey() common.Address  {
+// PublicKey - Get Public Key as an address
+func (ac *AccountKey) PublicKey() common.Address {
+
 	return crypto.PubkeyToAddress(ac.Key.PublicKey)
 }
 
-// Get Public Key as a string - e.g. "0xabcd....."
-func (ac * AccountKey) PublicKeyAsHexString() string  {
+// PublicKeyAsHexString - Get Public Key as a string - e.g. "0xabcd....."
+func (ac *AccountKey) PublicKeyAsHexString() string {
 	return crypto.PubkeyToAddress(ac.Key.PublicKey).Hex()
 }
 
-// Sign a transaction with the key
-func (ac * AccountKey) Sign(t * types.Transaction) (tr *types.Transaction,err error) {
-	tr, err = t.SignECDSA(ac.Key)
-	return
-}
-	
+// Sign - a transaction with the key
+// func (ac *AccountKey) Sign(t *types.Transaction) (tr *types.Transaction, err error) {
+// 	tr, err = t.SignECDSA(types.HomesteadSigner{}, ac.Key)
+// 	return
+// }
