@@ -4,7 +4,9 @@ import (
 	"crypto/ecdsa"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/params"
 )
 
 type AccountKey struct {
@@ -78,7 +80,13 @@ func (ac *AccountKey) PublicKeyAsHexString() string {
 }
 
 // Sign - a transaction with the key
-// func (ac *AccountKey) Sign(t *types.Transaction) (tr *types.Transaction, err error) {
-// 	tr, err = t.SignECDSA(types.HomesteadSigner{}, ac.Key)
-// 	return
-// }
+func (ac *AccountKey) Sign(t *types.Transaction) (tr *types.Transaction, err error) {
+	// see accounts/account_manager.Sign
+	// crypto.Sign(hash,key)
+	//params.MainnetChainConfig
+	s := types.NewEIP155Signer(params.TestnetChainConfig.ChainId)
+	tr, err = types.SignTx(t, s, ac.Key)
+
+	// tr, err = t.SignECDSA(types.HomesteadSigner{}, ac.Key)
+	return
+}
