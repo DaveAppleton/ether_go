@@ -7,6 +7,7 @@ import (
 	"os/user"
 
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/spf13/viper"
 	"golang.org/x/net/context"
 )
 
@@ -14,6 +15,7 @@ type ethIpcHandler struct {
 	ipcFileLocation string
 }
 
+// This assumes that viper has been initialised in the main program
 // NewEthIpc sets up the path to the Ethereum IPC file
 // returns true is if exists, false otherwise
 // usage:
@@ -26,7 +28,10 @@ func NewEthIpc() *ethIpcHandler {
 		log.Println(err)
 		return nil
 	}
-	eh.ipcFileLocation = usr.HomeDir + "/Library/Ethereum/geth.ipc"
+	eh.ipcFileLocation = viper.GetString("IPC_PATH")
+	if len(eh.ipcFileLocation) == 0 {
+		eh.ipcFileLocation = usr.HomeDir + "/Library/Ethereum/geth.ipc"
+	}
 	_, err = os.Stat(eh.ipcFileLocation)
 	if os.IsNotExist(err) {
 		return nil
