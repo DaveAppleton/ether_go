@@ -1,11 +1,13 @@
 package ethIpc
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/user"
 
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/viper"
 	"golang.org/x/net/context"
@@ -13,6 +15,7 @@ import (
 
 type ethIpcHandler struct {
 	ipcFileLocation string
+	client          *rpc.Client
 }
 
 // This assumes that viper has been initialised in the main program
@@ -21,12 +24,12 @@ type ethIpcHandler struct {
 // usage:
 //  myIPC = new(ethIpc)
 //  if myIPC.New() != nil { ....
-func NewEthIpc() *ethIpcHandler {
+func NewEthIpc() (*ethIpcHandler, error) {
 	eh := new(ethIpcHandler)
 	usr, err := user.Current()
 	if err != nil {
 		log.Println(err)
-		return nil
+		return nil, nil
 	}
 	eh.ipcFileLocation = viper.GetString("IPC_PATH")
 	if len(eh.ipcFileLocation) == 0 {
@@ -34,9 +37,30 @@ func NewEthIpc() *ethIpcHandler {
 	}
 	_, err = os.Stat(eh.ipcFileLocation)
 	if os.IsNotExist(err) {
-		return nil
+		return nil, nil
 	}
-	return eh
+	client, err := rpc.DialIPC(context.TODO(), eh.ipcFileLocation)
+	// laddr := net.UnixAddr{Net: "unix", Name: eh.ipcFileLocation}
+	// conn, err := net.DialUnix("unix", nil, &laddr)
+	if err != nil {
+		fmt.Println("DialUnix : ", err)
+		return nil, err
+	}
+	//defer client.Close()
+	eh.client = client
+	return eh, err
+}
+func (eh *ethIpcHandler) Close() {
+	if eh.client != nil {
+		eh.client.Close()
+	}
+}
+
+func (eh *ethIpcHandler) EthClient() (*ethclient.Client, error) {
+	if eh.client == nil {
+		return nil, errors.New("Invalid RPC Client")
+	}
+	return ethclient.NewClient(eh.client), nil
 }
 
 // Call is a direct pass through to JSON / Client
@@ -44,17 +68,7 @@ func NewEthIpc() *ethIpcHandler {
 // REMEMBER : args is a STRUCTURE not JSON - forget this at your peril
 //
 func (eh *ethIpcHandler) Call(reply interface{}, serviceMethod string, args ...interface{}) error {
-	client, err := rpc.DialIPC(context.TODO(), eh.ipcFileLocation)
-	// laddr := net.UnixAddr{Net: "unix", Name: eh.ipcFileLocation}
-	// conn, err := net.DialUnix("unix", nil, &laddr)
-	if err != nil {
-		fmt.Println("DialUnix : ", err)
-		return err
-	}
-	defer client.Close()
-
-	err = client.Call(&reply, serviceMethod, args...)
-
+	err := eh.client.Call(&reply, serviceMethod, args...)
 	if err != nil {
 		fmt.Println("Call : ", err)
 		return err

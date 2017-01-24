@@ -9,10 +9,12 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rlp"
+	"golang.org/x/net/context"
 )
 
 // SendEthereum(sender * ethKeys.AccountKey, recipient common.Address, amountToSend int64) error
@@ -22,28 +24,23 @@ func SendEthereum(sender *ethKeys.AccountKey, recipient common.Address, amountTo
 	var ret interface{}
 	var zero interface{}
 
-	myEipc := ethIpc.NewEthIpc()
-	if myEipc == nil {
-		return zero, errors.New("error in IPC")
+	myEipc, err := ethIpc.NewEthIpc()
+	if err != nil {
+		return zero, err
 	}
-
+	defer myEipc.Close()
 	var TxnCount string
 
-	err := myEipc.Call(&TxnCount, "eth_getTransactionCount", sender.PublicKeyAsHexString(), "latest")
+	ec, _ := myEipc.EthClient()
+
+	nonce, err := ec.NonceAt(context.TODO(), sender.PublicKey(), nil)
+	gasPrice, err := ec.SuggestGasPrice(context.TODO())
 	if err != nil {
-		fmt.Println("eth_getTransactionCount ", err)
 		return zero, err
 	}
-	TxnCountBytes := common.FromHex(TxnCount)
-	nonce := common.ReadVarInt(TxnCountBytes)
 	fmt.Println("Nonce : ", nonce)
-	var gasPriceStr string
-	err = myEipc.Call(&gasPriceStr, "eth_gasPrice", nil)
-	if err != nil {
-		return zero, err
-	}
-	gasPriceBytes := common.FromHex(gasPriceStr)
-	gasPrice := common.BytesToBig(gasPriceBytes)
+	fmt.Println("GasPrice : ", gasPrice)
+	s := types.NewEIP155Signer(params.TestnetChainConfig.ChainId)
 
 	var amount big.Int
 	amount.SetInt64(amountToSend)
@@ -51,10 +48,7 @@ func SendEthereum(sender *ethKeys.AccountKey, recipient common.Address, amountTo
 	gasLimit.SetInt64(121000) // because it is a send - quite standard
 	data := common.FromHex("0x")
 	t := types.NewTransaction(nonce, recipient, &amount, &gasLimit, gasPrice, data)
-
-	s := types.NewEIP155Signer(params.TestnetChainConfig.ChainId)
 	nt, err := types.SignTx(t, s, sender.GetKey())
-
 	if err != nil {
 		return zero, err
 	}
@@ -62,17 +56,8 @@ func SendEthereum(sender *ethKeys.AccountKey, recipient common.Address, amountTo
 	if err != nil {
 		return zero, err
 	}
-	rawTxn := common.ToHex(rlpEncodedTx)
-	fmt.Printf("this goes in to raw tx: %v\n", rawTxn)
-
-	fmt.Println("about to send Raw")
-
-	err = myEipc.Call(&ret, "eth_sendRawTransaction", rawTxn)
-	if err != nil {
-		fmt.Println("Sending Raw Txn ", err)
-		return zero, err
-	}
-	return ret, nil
+	err = myEipc.Call(&ret, "eth_sendRawTransaction", common.ToHex(rlpEncodedTx))
+	return ret, err
 }
 
 type tx struct {
@@ -95,15 +80,15 @@ func estimateGas(sender *ethKeys.AccountKey, contract string) (big.Int, error) {
 
 	fmt.Println("Estimate Gas")
 
-	myEipc := ethIpc.NewEthIpc()
-	if myEipc == nil {
+	myEipc, err := ethIpc.NewEthIpc()
+	if err != nil {
 		return zero, errors.New("error in IPC")
 	}
 
 	txStruct.Data = contract
 
 	var gasLimitStr string
-	err := myEipc.Call(&gasLimitStr, "eth_estimateGas", &txStruct)
+	err = myEipc.Call(&gasLimitStr, "eth_estimateGas", &txStruct)
 	if err != nil {
 		return zero, err
 	}
@@ -123,33 +108,41 @@ func PostContract(sender *ethKeys.AccountKey, contract []byte) (interface{}, err
 	var ret interface{}
 	var zero interface{}
 	//
-	myEipc := ethIpc.NewEthIpc()
-	if myEipc == nil {
-		return zero, errors.New("error in IPC")
-	}
-
-	var TxnCount string
-	err := myEipc.Call("eth_getTransactionCount", sender.PublicKeyAsHexString(), &TxnCount)
+	myEipc, err := ethIpc.NewEthIpc()
 	if err != nil {
 		return zero, err
 	}
-	TxnCountBytes := common.FromHex(TxnCount)
-	nonce := common.ReadVarInt(TxnCountBytes)
 
-	var gasPriceStr string
-	err = myEipc.Call(&gasPriceStr, "eth_gasPrice", nil)
+	ec, _ := myEipc.EthClient()
+
+	nonce, err := ec.NonceAt(context.TODO(), sender.PublicKey(), nil)
 	if err != nil {
 		return zero, err
 	}
-	gasPriceBytes := common.FromHex(gasPriceStr)
-	gasPrice := common.BytesToBig(gasPriceBytes)
 
-	var amount big.Int
-	amount.SetInt64(00)
+	gasPrice, err := ec.SuggestGasPrice(context.TODO())
+	if err != nil {
+		return zero, err
+	}
+	var amountZero big.Int
+	amountZero.SetInt64(00)
 	var gasLimit big.Int
 	gasLimit.SetInt64(90000000)
+	cm := ethereum.CallMsg{
+		From:     sender.PublicKey(),
+		To:       nil,
+		Gas:      &gasLimit,
+		GasPrice: gasPrice,
+		Value:    &amountZero,
+		Data:     contract,
+	}
 
-	newContractTx := types.NewContractCreation(nonce, &amount, &gasLimit, gasPrice, contract)
+	estGas, err := ec.EstimateGas(context.TODO(), cm)
+	if err != nil {
+		return zero, err
+	}
+
+	newContractTx := types.NewContractCreation(nonce, &amountZero, estGas, gasPrice, contract)
 	nt, err := sender.Sign(newContractTx)
 
 	rlpEncodedTx, err := rlp.EncodeToBytes(nt)
@@ -159,31 +152,8 @@ func PostContract(sender *ethKeys.AccountKey, contract []byte) (interface{}, err
 
 	strTxn := common.ToHex(rlpEncodedTx)
 
-	gasLimit, err = estimateGas(sender, common.ToHex(contract))
-	if err != nil {
-		return zero, nil
-	}
-
-	fmt.Println("Gas Limit", gasLimit.Int64())
-
-	newContractTx = types.NewContractCreation(nonce, &amount, &gasLimit, gasPrice, contract)
-	nt, err = sender.Sign(newContractTx)
-
-	rlpEncodedTx, err = rlp.EncodeToBytes(nt)
-	if err != nil {
-		panic(err)
-	}
-
-	strTxn = common.ToHex(rlpEncodedTx)
-
-	fmt.Println("calling sendRaw")
 	err = myEipc.Call(&ret, "eth_sendRawTransaction", &strTxn)
-	if err != nil {
-		return zero, err
-	}
-	fmt.Println(ret)
-
-	return ret, nil
+	return ret, err
 
 }
 
@@ -193,13 +163,13 @@ func PostContract(sender *ethKeys.AccountKey, contract []byte) (interface{}, err
 func WaitForTxnReceipt(txn interface{}) (interface{}, error) {
 	var ret interface{}
 	var zero interface{}
-	myEipc := ethIpc.NewEthIpc()
-	if myEipc == nil {
+	myEipc, err := ethIpc.NewEthIpc()
+	if err != nil {
 		return zero, errors.New("error in IPC")
 	}
 	fmt.Println()
 	count := 100
-	err := errors.New("43")
+	err = errors.New("43")
 	for err != nil {
 		err = myEipc.Call(&ret, "eth_getTransactionReceipt", txn)
 
