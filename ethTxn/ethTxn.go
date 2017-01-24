@@ -29,7 +29,6 @@ func SendEthereum(sender *ethKeys.AccountKey, recipient common.Address, amountTo
 		return zero, err
 	}
 	defer myEipc.Close()
-	var TxnCount string
 
 	ec, _ := myEipc.EthClient()
 
