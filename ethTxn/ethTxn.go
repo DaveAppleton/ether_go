@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rlp"
 	"golang.org/x/net/context"
 )
 
@@ -21,7 +20,7 @@ import (
 //
 //
 func SendEthereum(sender *ethKeys.AccountKey, recipient common.Address, amountToSend int64) (interface{}, error) {
-	var ret interface{}
+	//var ret interface{}
 	var zero interface{}
 
 	myEipc, err := ethIpc.NewEthIpc()
@@ -32,7 +31,7 @@ func SendEthereum(sender *ethKeys.AccountKey, recipient common.Address, amountTo
 
 	ec, _ := myEipc.EthClient()
 
-	nonce, err := ec.NonceAt(context.TODO(), sender.PublicKey(), nil)
+	nonce, err := ec.PendingNonceAt(context.TODO(), sender.PublicKey())
 	gasPrice, err := ec.SuggestGasPrice(context.TODO())
 	if err != nil {
 		return zero, err
@@ -51,12 +50,15 @@ func SendEthereum(sender *ethKeys.AccountKey, recipient common.Address, amountTo
 	if err != nil {
 		return zero, err
 	}
-	rlpEncodedTx, err := rlp.EncodeToBytes(nt)
-	if err != nil {
-		return zero, err
-	}
-	err = myEipc.Call(&ret, "eth_sendRawTransaction", common.ToHex(rlpEncodedTx))
-	return ret, err
+	err = ec.SendTransaction(context.TODO(), nt)
+	return nt.Hash(), err
+
+	// rlpEncodedTx, err := rlp.EncodeToBytes(nt)
+	// if err != nil {
+	// 	return zero, err
+	// }
+	// err = myEipc.Call(&ret, "eth_sendRawTransaction", common.ToHex(rlpEncodedTx))
+	// return ret, err
 }
 
 type tx struct {
@@ -104,7 +106,7 @@ func estimateGas(sender *ethKeys.AccountKey, contract string) (big.Int, error) {
 // would seriously suggest using Abigen to create Dapp bindings instead of uaing this
 //
 func PostContract(sender *ethKeys.AccountKey, contract []byte) (interface{}, error) {
-	var ret interface{}
+
 	var zero interface{}
 	//
 	myEipc, err := ethIpc.NewEthIpc()
@@ -144,15 +146,17 @@ func PostContract(sender *ethKeys.AccountKey, contract []byte) (interface{}, err
 	newContractTx := types.NewContractCreation(nonce, &amountZero, estGas, gasPrice, contract)
 	nt, err := sender.Sign(newContractTx)
 
-	rlpEncodedTx, err := rlp.EncodeToBytes(nt)
-	if err != nil {
-		panic(err)
-	}
+	err = ec.SendTransaction(context.TODO(), nt)
+	return nt.Hash(), err
+	// rlpEncodedTx, err := rlp.EncodeToBytes(nt)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	strTxn := common.ToHex(rlpEncodedTx)
+	// strTxn := common.ToHex(rlpEncodedTx)
 
-	err = myEipc.Call(&ret, "eth_sendRawTransaction", &strTxn)
-	return ret, err
+	// err = myEipc.Call(&ret, "eth_sendRawTransaction", &strTxn)
+	// return ret, err
 
 }
 
