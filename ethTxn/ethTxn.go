@@ -11,6 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	"golang.org/x/net/context"
@@ -94,8 +95,9 @@ func estimateGas(sender *ethKeys.AccountKey, contract string) (big.Int, error) {
 		return zero, err
 	}
 	fmt.Println("Gastimate: ", gasLimitStr)
-	gasLimitBytes := common.FromHex(gasLimitStr)
-	gasLimit := common.BytesToBig(gasLimitBytes)
+	//gasLimitBytes := common.FromHex(gasLimitStr)
+
+	gasLimit := math.MustParseBig256(gasLimitStr) // common.BytesToBig(gasLimitBytes)
 
 	return *gasLimit, nil
 
