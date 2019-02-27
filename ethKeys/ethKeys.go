@@ -84,7 +84,7 @@ func (ac *AccountKey) Sign(t *types.Transaction) (tr *types.Transaction, err err
 	// see accounts/account_manager.Sign
 	// crypto.Sign(hash,key)
 	//params.MainnetChainConfig
-	s := types.NewEIP155Signer(params.TestnetChainConfig.ChainId)
+	s := types.NewEIP155Signer(params.TestnetChainConfig.ChainID)
 	tr, err = types.SignTx(t, s, ac.Key)
 
 	// tr, err = t.SignECDSA(types.HomesteadSigner{}, ac.Key)

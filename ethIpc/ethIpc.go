@@ -68,7 +68,7 @@ func (eh *ethIpcHandler) EthClient() (*ethclient.Client, error) {
 // REMEMBER : args is a STRUCTURE not JSON - forget this at your peril
 //
 func (eh *ethIpcHandler) Call(reply interface{}, serviceMethod string, args ...interface{}) error {
-	err := eh.client.Call(&reply, serviceMethod, args...)
+	err := eh.client.Call(reply, serviceMethod, args...)
 	if err != nil {
 		fmt.Println("Call : ", err)
 		return err
